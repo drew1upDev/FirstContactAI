@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS agents (
     bio TEXT,
     voice_prompt TEXT, -- Instructions for AI to mimic agent's voice
     market_area TEXT, -- Description of the agent's local market
+    metadata JSONB, -- Additional settings/integrations
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

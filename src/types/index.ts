@@ -6,6 +6,7 @@ export type Agent = {
   bio?: string;
   voice_prompt?: string;
   market_area?: string;
+  metadata?: Record<string, any>;
   created_at: string;
   updated_at: string;
 };
