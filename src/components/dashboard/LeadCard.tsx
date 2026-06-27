@@ -4,7 +4,7 @@ import { Lead, LeadScore } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CalendarDays, Flame, MessageSquare, Phone } from "lucide-react";
+import { CalendarDays, Flame, MessageSquare, Phone, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface LeadCardProps {
@@ -17,27 +17,45 @@ interface LeadCardProps {
 export function LeadCard({ lead, latestScore, className, onClick }: LeadCardProps) {
   const isHot = (latestScore?.score || 0) >= 80;
   const isAppointmentReady = latestScore?.is_appointment_ready;
+  const isQualifying = lead.metadata?.is_qualifying;
+  const hasNewActivity = lead.metadata?.unread_count > 0;
 
   return (
     <Card 
       className={cn(
-        "cursor-pointer hover:border-primary/50 transition-colors shadow-sm",
-        isHot && "border-orange-200 bg-orange-50/30",
+        "cursor-pointer hover:border-primary/50 transition-all duration-300 shadow-sm relative group",
+        isHot && "border-orange-400 bg-orange-50/50 shadow-orange-100",
+        isQualifying && "border-teal-400 bg-teal-50/30",
         className
       )}
       onClick={onClick}
     >
+      {hasNewActivity && (
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
+        </span>
+      )}
+      
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-slate-900 truncate pr-2">
+          <h3 className="font-bold text-slate-900 truncate pr-2 group-hover:text-primary transition-colors">
             {lead.name}
           </h3>
-          {isHot && (
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200 gap-1 flex shrink-0">
-              <Flame size={12} className="fill-current" />
-              Hot
-            </Badge>
-          )}
+          <div className="flex gap-1 shrink-0">
+            {isQualifying && (
+              <Badge variant="secondary" className="bg-teal-100 text-teal-700 border-teal-200 gap-1 flex animate-pulse">
+                <Zap size={10} className="fill-current" />
+                AI
+              </Badge>
+            )}
+            {isHot && (
+              <Badge variant="secondary" className="bg-orange-500 text-white border-orange-600 gap-1 flex shrink-0 shadow-sm animate-bounce-subtle">
+                <Flame size={12} className="fill-current" />
+                Hot
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-3">
