@@ -7,6 +7,7 @@ import { BriefingCard } from "@/components/dashboard/BriefingCard";
 import { DashboardStats, AnalyticsCharts } from "@/components/dashboard/Analytics";
 import { Lead, Conversation, LeadScore } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, MessageSquare, BarChart3, Bell, Search, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
