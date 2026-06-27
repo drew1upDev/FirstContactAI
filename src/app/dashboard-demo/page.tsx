@@ -5,16 +5,19 @@ import { LeadPipeline } from "@/components/dashboard/LeadPipeline";
 import { ConversationThread } from "@/components/dashboard/ConversationThread";
 import { BriefingCard } from "@/components/dashboard/BriefingCard";
 import { DashboardStats, AnalyticsCharts } from "@/components/dashboard/Analytics";
+import { LiveActivityFeed } from "@/components/dashboard/LiveActivityFeed";
 import { Lead, Conversation, LeadScore } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, MessageSquare, BarChart3, Bell, Search, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { LayoutDashboard, Users, MessageSquare, BarChart3, Bell, Search, Settings, Flame, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 // Mock Data
 const mockLeads: Lead[] = [
-  { id: '1', agent_id: '1', name: 'John Doe', status: 'qualified', source: 'Zillow', email: 'john@example.com', phone: '555-0101', created_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date().toISOString() },
-  { id: '2', agent_id: '1', name: 'Alice Smith', status: 'new', source: 'Facebook', email: 'alice@example.com', phone: '555-0102', created_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date().toISOString() },
+  { id: '1', agent_id: '1', name: 'John Doe', status: 'qualified', source: 'Zillow', email: 'john@example.com', phone: '555-0101', created_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date().toISOString(), metadata: { is_qualifying: true } },
+  { id: '2', agent_id: '1', name: 'Alice Smith', status: 'new', source: 'Facebook', email: 'alice@example.com', phone: '555-0102', created_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date().toISOString(), metadata: { unread_count: 1 } },
   { id: '3', agent_id: '1', name: 'Bob Johnson', status: 'new', source: 'Website', email: 'bob@example.com', phone: '555-0103', created_at: new Date(Date.now() - 86400000).toISOString(), updated_at: new Date().toISOString() },
   { id: '4', agent_id: '1', name: 'Sarah Wilson', status: 'qualified', source: 'Zillow', email: 'sarah@example.com', phone: '555-0104', created_at: new Date(Date.now() - 172800000).toISOString(), updated_at: new Date().toISOString() },
 ];
@@ -34,9 +37,42 @@ const mockMessages: Conversation[] = [
 
 export default function DashboardDemo() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(mockLeads[0]);
+  const [showHotAlert, setShowHotAlert] = useState(true);
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+      {/* Hot Lead Notification */}
+      {showHotAlert && (
+        <div className="absolute top-20 right-8 z-50 w-80 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="bg-orange-500 text-white p-4 rounded-xl shadow-2xl shadow-orange-200 border border-orange-400 flex flex-col gap-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <div className="size-8 bg-white/20 rounded-lg flex items-center justify-center animate-pulse">
+                  <Flame size={18} className="fill-current" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black tracking-widest opacity-80">Immediate Action</p>
+                  <p className="font-extrabold text-lg leading-tight">Hot Lead Detected!</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowHotAlert(false)}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <p className="text-sm font-bold">John Doe is ready for a call.</p>
+              <p className="text-xs opacity-90 mt-1">AI score: 85/100 • 3 mins ago</p>
+            </div>
+            <button className="bg-white text-orange-600 w-full py-2 rounded-lg font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-colors shadow-lg">
+              View Briefing
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-64 bg-primary text-white flex flex-col shrink-0">
         <div className="p-6 text-xl font-extrabold flex items-center gap-2 tracking-tight">
@@ -123,13 +159,17 @@ export default function DashboardDemo() {
                         <h2 className="font-bold text-slate-800">Conversation Thread</h2>
                         <button className="text-xs text-accent font-bold hover:underline">View History</button>
                       </div>
-                      <div className="h-[450px]">
+                      <div className="h-[350px]">
                         <ConversationThread 
                           messages={mockMessages} 
                           leadName={selectedLead.name} 
                         />
                       </div>
                       
+                      <div className="pt-4 border-t border-slate-100">
+                        <LiveActivityFeed />
+                      </div>
+
                       {mockScores[selectedLead.id] && (
                         <div className="space-y-4 pt-2">
                           <h2 className="font-bold text-slate-800">AI Intelligence</h2>
