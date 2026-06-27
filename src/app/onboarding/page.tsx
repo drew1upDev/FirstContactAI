@@ -5,13 +5,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { Stepper } from '@/components/onboarding/Stepper';
+import { OnboardingInput, OnboardingTextarea } from '@/components/onboarding/OnboardingField';
+import { ZipCodeSelector } from '@/components/onboarding/ZipCodeSelector';
+import { WebhookDisplay } from '@/components/onboarding/WebhookDisplay';
 
 const onboardingSchema = z.object({
   // Step 1: Profile
@@ -27,7 +28,7 @@ const onboardingSchema = z.object({
   
   // Step 3: Market & Integrations
   marketArea: z.string().min(2, 'Market area description is required'),
-  webhookUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  zipCodes: z.array(z.string()).min(1, 'At least one zip code is required'),
 });
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
@@ -37,6 +38,7 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibratedVoicePrompt, setCalibratedVoicePrompt] = useState('');
+  const [agentId, setAgentId] = useState<string | null>(null);
 
   const form = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
@@ -49,6 +51,7 @@ export default function OnboardingPage() {
       personaSamples: '',
       voiceIdentity: 'Professional',
       marketArea: '',
+      zipCodes: [],
     },
   });
 
@@ -58,6 +61,10 @@ export default function OnboardingPage() {
       fieldsToValidate = ['firstName', 'lastName', 'email', 'brokerageName'];
     } else if (step === 2) {
       fieldsToValidate = ['personaSamples', 'voiceIdentity'];
+      
+      const isValid = await form.trigger(fieldsToValidate);
+      if (!isValid) return;
+
       setIsCalibrating(true);
       try {
         const response = await fetch('/api/agents/calibrate', {
@@ -76,7 +83,9 @@ export default function OnboardingPage() {
         console.error('Calibration failed:', error);
       } finally {
         setIsCalibrating(false);
+        setStep(step + 1);
       }
+      return;
     }
     
     const isValid = await form.trigger(fieldsToValidate);
@@ -88,7 +97,6 @@ export default function OnboardingPage() {
   const onSubmit = async (values: OnboardingValues) => {
     setIsSubmitting(true);
     try {
-      // 1. Create/Update Agent in Supabase
       const { data, error } = await supabase
         .from('agents')
         .insert([
@@ -99,8 +107,8 @@ export default function OnboardingPage() {
             bio: `Brokerage: ${values.brokerageName}`,
             voice_prompt: calibratedVoicePrompt || `Voice: ${values.voiceIdentity}`,
             market_area: values.marketArea,
+            zip_codes: values.zipCodes,
             metadata: {
-              webhook_url: values.webhookUrl,
               onboarding_completed: true,
             }
           }
@@ -109,10 +117,9 @@ export default function OnboardingPage() {
         .single();
 
       if (error) throw error;
-
-      // 2. Redirect to dashboard (or show success)
-      alert('Onboarding complete! Redirecting to dashboard...');
-      window.location.href = '/';
+      
+      setAgentId(data.id);
+      setStep(4); // Success step
     } catch (error) {
       console.error('Error during onboarding:', error);
       alert('Failed to complete onboarding. Please try again.');
@@ -122,198 +129,226 @@ export default function OnboardingPage() {
   };
 
   const steps = [
-    { id: 1, title: 'Agent Profile' },
-    { id: 2, title: 'Persona Calibration' },
-    { id: 3, title: 'Market Setup' },
+    { id: 1, title: 'Profile' },
+    { id: 2, title: 'Persona' },
+    { id: 3, title: 'Market' },
   ];
 
+  const webhookUrl = agentId 
+    ? `https://api.firstcontact.ai/v1/webhooks/ingest/${agentId}`
+    : "https://api.firstcontact.ai/v1/webhooks/ingest/PENDING";
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[650px]">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col md:flex-row h-auto md:h-[700px] border border-slate-100">
         {/* Sidebar */}
-        <div className="w-full md:w-1/3 bg-[#0F1B2D] p-8 text-white flex flex-col justify-between">
-          <div>
-            <div className="w-10 h-10 bg-[#00C896] rounded-xl mb-6"></div>
-            <h1 className="text-2xl font-bold mb-4">Set up your AI Agent</h1>
+        <div className="w-full md:w-[320px] bg-primary p-10 text-white flex flex-col">
+          <div className="mb-12">
+            <div className="w-12 h-12 bg-accent rounded-2xl mb-8 flex items-center justify-center">
+                <div className="w-6 h-6 bg-white/20 rounded-full blur-sm animate-pulse"></div>
+            </div>
+            <h1 className="text-2xl font-bold mb-4">FirstContact AI</h1>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Let's configure your AI to match your voice and business goals.
+              Your 24/7 lead qualification partner. Let's get your agent ready for the field.
             </p>
           </div>
           
-          <div className="space-y-6 mt-8 md:mt-0">
-            {steps.map((s) => (
-              <div key={s.id} className="flex items-center gap-4">
-                <div className={cn(
-                  "w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-colors",
-                  step >= s.id ? "border-[#00C896] text-[#00C896]" : "border-slate-700 text-slate-500"
-                )}>
-                  {step > s.id ? <Check className="w-4 h-4" /> : s.id}
-                </div>
-                <p className={cn(
-                  "text-sm font-medium transition-colors",
-                  step >= s.id ? "text-white" : "text-slate-500"
-                )}>
-                  {s.title}
-                </p>
-              </div>
-            ))}
+          <Stepper steps={steps} currentStep={step} className="mt-4" />
+          
+          <div className="mt-auto pt-10 border-t border-white/10 hidden md:block">
+            <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Trusted by solo agents</p>
           </div>
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 p-8 md:p-10 flex flex-col overflow-y-auto">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
-            {step === 1 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <h2 className="text-2xl font-bold mb-2">Basic Information</h2>
-                <p className="text-slate-500 text-sm mb-8">This information helps the AI identify as part of your team.</p>
+        <div className="flex-1 p-8 md:p-12 flex flex-col overflow-y-auto">
+          {step <= 3 ? (
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+              {step === 1 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <header className="mb-10">
+                    <h2 className="text-3xl font-bold text-primary mb-2">Agent Profile</h2>
+                    <p className="text-slate-500">Tell us who you are and where you work.</p>
+                  </header>
 
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">First Name</Label>
-                      <Input {...form.register('firstName')} placeholder="e.g. Sarah" />
-                      {form.formState.errors.firstName && (
-                        <p className="text-xs text-red-500">{form.formState.errors.firstName.message}</p>
-                      )}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <OnboardingInput 
+                        label="First Name" 
+                        {...form.register('firstName')} 
+                        placeholder="e.g. Sarah"
+                        error={form.formState.errors.firstName?.message}
+                      />
+                      <OnboardingInput 
+                        label="Last Name" 
+                        {...form.register('lastName')} 
+                        placeholder="e.g. Jenkins"
+                        error={form.formState.errors.lastName?.message}
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Last Name</Label>
-                      <Input {...form.register('lastName')} placeholder="e.g. Jenkins" />
-                      {form.formState.errors.lastName && (
-                        <p className="text-xs text-red-500">{form.formState.errors.lastName.message}</p>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Email Address</Label>
-                    <Input {...form.register('email')} type="email" placeholder="sarah@example.com" />
-                    {form.formState.errors.email && (
-                      <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
-                    )}
-                  </div>
+                    <OnboardingInput 
+                      label="Email Address" 
+                      type="email" 
+                      {...form.register('email')} 
+                      placeholder="sarah@example.com"
+                      error={form.formState.errors.email?.message}
+                    />
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Brokerage Name</Label>
-                    <Input {...form.register('brokerageName')} placeholder="e.g. Coastal Realty Group" />
-                    {form.formState.errors.brokerageName && (
-                      <p className="text-xs text-red-500">{form.formState.errors.brokerageName.message}</p>
-                    )}
+                    <OnboardingInput 
+                      label="Brokerage Name" 
+                      {...form.register('brokerageName')} 
+                      placeholder="e.g. Coastal Realty Group"
+                      error={form.formState.errors.brokerageName?.message}
+                    />
+                    
+                    <OnboardingInput 
+                      label="Phone Number (Optional)" 
+                      {...form.register('phone')} 
+                      placeholder="+1 (555) 000-0000"
+                    />
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {step === 2 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <h2 className="text-2xl font-bold mb-2">Persona Calibration</h2>
-                <p className="text-slate-500 text-sm mb-8">Paste 3-5 examples of your past texts or emails so the AI can learn your style.</p>
+              {step === 2 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <header className="mb-10">
+                    <h2 className="text-3xl font-bold text-primary mb-2">Persona Calibration</h2>
+                    <p className="text-slate-500">Our AI learns your specific communication style.</p>
+                  </header>
 
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Conversation Samples</Label>
-                    <Textarea 
+                  <div className="space-y-8">
+                    <OnboardingTextarea 
+                      label="Communication Samples"
+                      description="Paste 3-5 examples of your past texts or emails. This helps the AI mirror your voice."
                       {...form.register('personaSamples')} 
-                      className="min-h-[150px]" 
                       placeholder="Agent: Hey John, just checking in if you saw that house on Main St..." 
+                      error={form.formState.errors.personaSamples?.message}
                     />
-                    {form.formState.errors.personaSamples && (
-                      <p className="text-xs text-red-500">{form.formState.errors.personaSamples.message}</p>
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Target Voice Identity</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {['Friendly', 'Professional', 'Energetic'].map((voice) => (
-                        <button
-                          key={voice}
-                          type="button"
-                          onClick={() => form.setValue('voiceIdentity', voice as any)}
-                          className={cn(
-                            "p-3 border-2 rounded-xl text-center transition-all",
-                            form.watch('voiceIdentity') === voice 
-                              ? "border-[#00C896] bg-[#00C896]/5" 
-                              : "border-slate-100 hover:border-slate-300"
-                          )}
-                        >
-                          <p className="text-sm font-bold">{voice}</p>
-                        </button>
-                      ))}
+                    <div className="space-y-3">
+                      <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Tone Preference</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {['Friendly', 'Professional', 'Energetic'].map((voice) => (
+                          <button
+                            key={voice}
+                            type="button"
+                            onClick={() => form.setValue('voiceIdentity', voice as any)}
+                            className={cn(
+                              "p-4 border-2 rounded-2xl text-center transition-all duration-200",
+                              form.watch('voiceIdentity') === voice 
+                                ? "border-accent bg-accent/5 ring-4 ring-accent/10" 
+                                : "border-slate-100 hover:border-slate-200"
+                            )}
+                          >
+                            <p className={cn(
+                              "text-sm font-bold",
+                              form.watch('voiceIdentity') === voice ? "text-primary" : "text-slate-600"
+                            )}>{voice}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {step === 3 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <h2 className="text-2xl font-bold mb-2">Market & Integrations</h2>
-                <p className="text-slate-500 text-sm mb-8">Tell the AI about your primary market area and set up your lead ingestion.</p>
+              {step === 3 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <header className="mb-10">
+                    <h2 className="text-3xl font-bold text-primary mb-2">Market & Territory</h2>
+                    <p className="text-slate-500">Define where your AI should focus its local expertise.</p>
+                  </header>
 
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Market Description</Label>
-                    <Textarea 
+                  <div className="space-y-8">
+                    <OnboardingTextarea 
+                      label="Market Description"
+                      description="Describe your primary focus area and any neighborhood specialties."
                       {...form.register('marketArea')} 
-                      className="min-h-[120px]" 
-                      placeholder="e.g. I focus on luxury condos in downtown Miami..." 
+                      placeholder="e.g. I focus on luxury condos in downtown Miami and waterfront properties in Brickell..." 
+                      error={form.formState.errors.marketArea?.message}
                     />
-                    {form.formState.errors.marketArea && (
-                      <p className="text-xs text-red-500">{form.formState.errors.marketArea.message}</p>
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Lead Source Webhook (Optional)</Label>
-                    <div className="flex gap-2">
-                      <Input {...form.register('webhookUrl')} placeholder="https://api.firstcontact.ai/v1/webhooks/..." />
-                    </div>
-                    <p className="text-[10px] text-slate-400">Connect your CRM (Zillow, Facebook, etc.) to this URL to start qualifying leads instantly.</p>
-                    {form.formState.errors.webhookUrl && (
-                      <p className="text-xs text-red-500">{form.formState.errors.webhookUrl.message}</p>
-                    )}
+                    <ZipCodeSelector 
+                      label="Target Zip Codes"
+                      description="Add the zip codes where you want the AI to handle leads."
+                      zipCodes={form.watch('zipCodes')}
+                      onChange={(zips) => form.setValue('zipCodes', zips)}
+                    />
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="mt-auto pt-8 flex justify-between">
-              {step > 1 ? (
-                <Button type="button" variant="outline" onClick={prevStep}>
-                  Back
-                </Button>
-              ) : <div></div>}
-              
-              {step < 3 ? (
-                <Button type="button" onClick={nextStep} disabled={isCalibrating} className="bg-[#0F1B2D] text-white hover:bg-slate-800">
+              <div className="mt-auto pt-10 flex justify-between gap-4">
+                {step > 1 ? (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={prevStep}
+                    className="text-slate-500 hover:text-primary"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                ) : <div />}
+                
+                <Button 
+                  type="button" 
+                  onClick={step < 3 ? nextStep : form.handleSubmit(onSubmit)} 
+                  disabled={isCalibrating || isSubmitting}
+                  className={cn(
+                    "min-w-[140px] rounded-xl h-12 font-bold transition-all",
+                    step === 3 ? "bg-accent hover:bg-accent/90" : "bg-primary hover:bg-primary/90"
+                  )}
+                >
                   {isCalibrating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Calibrating...
                     </>
+                  ) : isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
                   ) : (
                     <>
-                      Next Step
+                      {step === 3 ? 'Complete Setup' : 'Continue'}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
-              ) : (
-                <Button type="submit" disabled={isSubmitting} className="bg-[#00C896] text-white hover:bg-[#00C896]/90">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Finishing...
-                    </>
-                  ) : (
-                    'Complete Setup'
-                  )}
+              </div>
+            </form>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
+                <div className="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center mb-8">
+                    <Check className="w-10 h-10" />
+                </div>
+                <h2 className="text-3xl font-bold text-primary mb-4">You're All Set!</h2>
+                <p className="text-slate-500 max-w-sm mb-10">
+                    Your AI agent is calibrated and ready. Use the webhook below to connect your lead sources.
+                </p>
+                
+                <div className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-8 mb-10 text-left">
+                    <WebhookDisplay 
+                        label="Your Inbound Webhook URL"
+                        url={webhookUrl}
+                    />
+                    <p className="text-[11px] text-slate-400 mt-4 leading-relaxed">
+                        Copy this URL into your lead providers (Zillow, Facebook Leads, etc.) to start qualifying prospects instantly.
+                    </p>
+                </div>
+
+                <Button 
+                    onClick={() => window.location.href = '/'}
+                    className="bg-primary hover:bg-primary/90 rounded-xl px-10 h-12 font-bold"
+                >
+                    Go to Dashboard
                 </Button>
-              )}
             </div>
-          </form>
+          )}
         </div>
       </div>
     </div>
