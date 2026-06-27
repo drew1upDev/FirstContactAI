@@ -74,7 +74,23 @@ export async function processLead(normalizedLead: NormalizedLead) {
     throw error;
   }
 
-  // 2. Queue outreach job via QStash
+  // 2. Trigger Realtime Event for Dashboard
+  try {
+    await supabase.channel('dashboard-alerts').send({
+      type: 'broadcast',
+      event: 'new-lead',
+      payload: { 
+        leadId: data.id, 
+        name: data.name, 
+        source: data.source,
+        timestamp: new Date().toISOString()
+      },
+    });
+  } catch (err) {
+    console.error('Error triggering realtime event:', err);
+  }
+
+  // 3. Queue outreach job via QStash
   // Target: within 30 seconds
   try {
     if (process.env.QSTASH_TOKEN) {

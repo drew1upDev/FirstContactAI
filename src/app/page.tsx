@@ -35,7 +35,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" className="font-bold text-slate-600">Login</Button>
-            <Link href="/onboarding-demo">
+            <Link href="/onboarding">
               <Button className="bg-primary hover:bg-primary/90 text-white font-bold px-6">Get Started</Button>
             </Link>
           </div>
@@ -58,7 +58,7 @@ export default function Home() {
               FirstContact AI is the 24/7 multi-channel lead response agent that mirrors your personal voice and local expertise to qualify prospects within seconds.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/onboarding-demo">
+              <Link href="/onboarding">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-extrabold px-10 py-7 text-lg rounded-2xl shadow-xl shadow-primary/10 flex items-center gap-2">
                   Start Your 14-Day Free Trial
                   <ArrowRight size={20} />
@@ -227,7 +227,7 @@ export default function Home() {
               Ready to turn more leads <br /> into appointments?
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/onboarding-demo">
+              <Link href="/onboarding">
                 <Button size="lg" className="bg-primary hover:bg-slate-800 text-white font-extrabold px-12 py-8 text-xl rounded-2xl shadow-2xl">
                   Get Started Now
                 </Button>

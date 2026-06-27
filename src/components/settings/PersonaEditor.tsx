@@ -45,7 +45,7 @@ export function PersonaEditor() {
               </div>
               <Slider 
                 value={formality} 
-                onValueChange={setFormality} 
+                onValueChange={(val) => setFormality(Array.isArray(val) ? val : [val])} 
                 max={100} 
                 step={1} 
               />

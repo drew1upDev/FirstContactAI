@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
+import { Receiver } from "@upstash/qstash";
 import { aiService } from '@/services/ai-service';
 
 async function handler(req: Request) {
