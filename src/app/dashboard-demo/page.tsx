@@ -40,7 +40,7 @@ export default function DashboardDemo() {
   const [showHotAlert, setShowHotAlert] = useState(true);
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 overflow-hidden font-sans">
       {/* Hot Lead Notification */}
       {showHotAlert && (
         <div className="absolute top-20 right-8 z-50 w-80 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -74,15 +74,20 @@ export default function DashboardDemo() {
       )}
 
       {/* Sidebar */}
-      <aside className="w-64 bg-primary text-white flex flex-col shrink-0">
-        <div className="p-6 text-xl font-extrabold flex items-center gap-2 tracking-tight">
-          <div className="size-8 bg-accent rounded-lg flex items-center justify-center">
-            <div className="size-4 bg-white rounded-sm"></div>
+      <aside className="w-full md:w-64 bg-primary text-white flex flex-col shrink-0">
+        <div className="p-4 md:p-6 text-xl font-extrabold flex items-center justify-between md:justify-start gap-2 tracking-tight">
+          <div className="flex items-center gap-2">
+            <div className="size-8 bg-accent rounded-lg flex items-center justify-center">
+              <div className="size-4 bg-white rounded-sm"></div>
+            </div>
+            FirstContact <span className="text-accent">AI</span>
           </div>
-          FirstContact <span className="text-accent">AI</span>
+          <button className="md:hidden p-2 text-slate-400 hover:text-white">
+            <LayoutDashboard size={24} />
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="hidden md:block flex-1 px-4 space-y-1">
           <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active />
           <NavItem icon={<Users size={20} />} label="Leads" />
           <NavItem icon={<MessageSquare size={20} />} label="Conversations" />
@@ -90,7 +95,7 @@ export default function DashboardDemo() {
           <NavItem icon={<Settings size={20} />} label="Settings" />
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="hidden md:block p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 p-2">
             <Avatar className="size-10 border border-slate-700">
               <AvatarFallback className="bg-slate-800 text-white font-bold">SJ</AvatarFallback>
@@ -106,51 +111,58 @@ export default function DashboardDemo() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <div className="relative w-96">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+          <div className="relative w-full max-w-md hidden sm:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <Input 
               placeholder="Search leads, properties..." 
               className="pl-10 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-accent"
             />
           </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-full relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            <button className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20">
-              Add New Lead
-            </button>
+          <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+            <div className="flex items-center gap-2 md:hidden">
+               <Search className="text-slate-400" size={20} />
+            </div>
+            <div className="flex items-center gap-4 ml-auto">
+              <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-full relative">
+                <Bell size={20} />
+                <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+              </button>
+              <button className="bg-accent text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20 whitespace-nowrap">
+                Add New Lead
+              </button>
+            </div>
           </div>
         </header>
 
         {/* Dashboard Scroll Area */}
-        <div className="flex-1 overflow-y-auto p-8">
-          <Tabs defaultValue="pipeline" className="space-y-8">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Agent Overview</h1>
-              <TabsList className="bg-slate-100 p-1">
-                <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Pipeline</TabsTrigger>
-                <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">Analytics</TabsTrigger>
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+          <Tabs defaultValue="pipeline" className="space-y-4 md:y-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">Agent Overview</h1>
+              <TabsList className="bg-slate-100 p-1 w-full sm:w-auto">
+                <TabsTrigger value="pipeline" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs md:text-sm">Pipeline</TabsTrigger>
+                <TabsTrigger value="analytics" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs md:text-sm">Analytics</TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="pipeline" className="space-y-8 mt-0 border-none p-0 outline-none">
               <DashboardStats />
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-slate-800">Active Pipeline</h2>
-                    <span className="text-xs text-slate-400 font-medium">Last updated: 2 mins ago</span>
-                  </div>
-                  <LeadPipeline 
-                    leads={mockLeads} 
-                    scores={mockScores} 
-                    onLeadClick={setSelectedLead}
-                  />
-                </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 pb-20 md:pb-8">
+            <div className="xl:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-slate-800">Active Pipeline</h2>
+                <span className="text-xs text-slate-400 font-medium">Last updated: 2 mins ago</span>
+              </div>
+              <div className="overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+                <LeadPipeline 
+                  leads={mockLeads} 
+                  scores={mockScores} 
+                  onLeadClick={setSelectedLead}
+                />
+              </div>
+            </div>
 
                 <div className="space-y-6">
                   {selectedLead ? (
@@ -190,7 +202,7 @@ export default function DashboardDemo() {
               </div>
             </TabsContent>
 
-            <TabsContent value="analytics" className="mt-0 border-none p-0 outline-none">
+            <TabsContent value="analytics" className="mt-0 border-none p-0 outline-none pb-20 md:pb-8">
               <div className="space-y-8">
                 <DashboardStats />
                 <AnalyticsCharts />
