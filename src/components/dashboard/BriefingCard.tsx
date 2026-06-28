@@ -4,33 +4,44 @@ import { Lead, LeadScore } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ClipboardList, Mail, Phone, User, Zap } from "lucide-react";
+import { ClipboardList, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BriefingCardProps {
   lead: Lead;
   score: LeadScore;
+  isAIPaused?: boolean;
+  onToggleAI?: () => void;
   onTakeOver?: () => void;
   onQualifyManually?: () => void;
   className?: string;
 }
 
-export function BriefingCard({ lead, score, onTakeOver, onQualifyManually, className }: BriefingCardProps) {
-  const [isPaused, setIsPaused] = useState(false);
-
+export function BriefingCard({ 
+  lead, 
+  score, 
+  isAIPaused = false, 
+  onToggleAI, 
+  onTakeOver, 
+  onQualifyManually, 
+  className 
+}: BriefingCardProps) {
   return (
     <Card className={cn("border-accent/30 shadow-lg bg-white", className)}>
       <CardHeader className="bg-accent/5 pb-4">
         <div className="flex justify-between items-start">
           <div className="flex gap-3">
             <div className="size-10 rounded-full bg-accent flex items-center justify-center text-white">
-              <Zap size={20} className={cn("fill-current", !isPaused && "animate-pulse")} />
+              <Zap size={20} className={cn("fill-current", !isAIPaused && "animate-pulse")} />
             </div>
             <div>
               <CardTitle className="text-xl font-bold text-primary">Lead Briefing</CardTitle>
-              <CardDescription className="text-accent font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
-                {isPaused ? "AI Interventon Paused" : "AI Qualification Active"}
-                {!isPaused && <span className="flex h-1.5 w-1.5 rounded-full bg-accent animate-ping" />}
+              <CardDescription className={cn(
+                "font-bold uppercase tracking-widest text-[10px] flex items-center gap-2",
+                isAIPaused ? "text-amber-500" : "text-accent"
+              )}>
+                {isAIPaused ? "AI Intervention Paused" : "AI Qualification Active"}
+                {!isAIPaused && <span className="flex h-1.5 w-1.5 rounded-full bg-accent animate-ping" />}
               </CardDescription>
             </div>
           </div>
@@ -80,7 +91,7 @@ export function BriefingCard({ lead, score, onTakeOver, onQualifyManually, class
             <h3 className="font-bold">AI Qualification Summary</h3>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed ml-7 font-medium italic">
-            "{score.summary || "No summary provided by AI."}"
+            &ldquo;{score.summary || "No summary provided by AI."}&rdquo;
           </p>
         </section>
       </CardContent>
@@ -89,10 +100,15 @@ export function BriefingCard({ lead, score, onTakeOver, onQualifyManually, class
         <div className="flex gap-3 w-full">
           <Button
             variant="outline"
-            className="flex-1 border-slate-200 text-slate-600 font-bold hover:bg-slate-100"
-            onClick={() => setIsPaused(!isPaused)}
+            className={cn(
+              "flex-1 font-bold transition-all",
+              isAIPaused 
+                ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50" 
+                : "border-slate-200 text-slate-600 hover:bg-slate-100"
+            )}
+            onClick={onToggleAI}
           >
-            {isPaused ? "Resume AI" : "Pause AI"}
+            {isAIPaused ? "Resume AI" : "Pause AI"}
           </Button>
           <Button
             className="flex-1 bg-primary text-white font-bold hover:bg-primary/90"

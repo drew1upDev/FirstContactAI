@@ -4,34 +4,36 @@ import { Lead, LeadScore } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CalendarDays, Flame, MessageSquare, Phone, Zap } from "lucide-react";
+import { CalendarDays, Flame, MessageSquare, Phone, Zap, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface LeadCardProps {
   lead: Lead;
   latestScore?: LeadScore;
+  isPaused?: boolean;
   className?: string;
   onClick?: () => void;
 }
 
-export function LeadCard({ lead, latestScore, className, onClick }: LeadCardProps) {
+export function LeadCard({ lead, latestScore, isPaused, className, onClick }: LeadCardProps) {
   const isHot = (latestScore?.score || 0) >= 80;
   const isAppointmentReady = latestScore?.is_appointment_ready;
-  const isQualifying = lead.metadata?.is_qualifying;
+  const isQualifying = lead.metadata?.is_qualifying && !isPaused;
   const hasNewActivity = lead.metadata?.unread_count > 0;
 
   return (
     <Card 
       className={cn(
-        "cursor-pointer hover:border-primary/50 transition-all duration-300 shadow-sm relative group",
+        "cursor-pointer hover:border-primary/50 transition-all duration-300 shadow-sm relative group overflow-hidden",
         isHot && "border-orange-400 bg-orange-50/50 shadow-orange-100",
         isQualifying && "border-teal-400 bg-teal-50/30",
+        isPaused && "border-blue-400 bg-blue-50/30",
         className
       )}
       onClick={onClick}
     >
       {hasNewActivity && (
-        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+        <span className="absolute -top-1 -right-1 flex h-3 w-3 z-10">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
           <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
         </span>
@@ -49,8 +51,14 @@ export function LeadCard({ lead, latestScore, className, onClick }: LeadCardProp
                 AI
               </Badge>
             )}
+            {isPaused && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 gap-1 flex">
+                <User size={10} className="fill-current" />
+                You
+              </Badge>
+            )}
             {isHot && (
-              <Badge variant="secondary" className="bg-orange-500 text-white border-orange-600 gap-1 flex shrink-0 shadow-sm animate-bounce-subtle">
+              <Badge variant="secondary" className="bg-orange-500 text-white border-orange-600 gap-1 flex shrink-0 shadow-sm">
                 <Flame size={12} className="fill-current" />
                 Hot
               </Badge>

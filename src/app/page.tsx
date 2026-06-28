@@ -1,18 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import { 
   Bot, 
   MessageSquare, 
-  Mail, 
-  Phone, 
   Zap, 
   Clock, 
-  Target, 
   CheckCircle2, 
   ArrowRight,
-  ShieldCheck,
   TrendingUp,
-  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -96,7 +90,7 @@ export default function Home() {
                         <div className="space-y-2 flex-1 flex flex-col items-end">
                           <div className="h-3 w-1/4 bg-slate-100 rounded" />
                           <div className="h-14 w-4/5 bg-primary rounded-2xl rounded-tr-none text-white/90 p-3 text-[10px] overflow-hidden leading-tight">
-                            "Hi John! I see you're interested in the property on Maple St. Are you looking for a 3 or 4 bedroom home?"
+                            &ldquo;Hi John! I see you&apos;re interested in the property on Maple St. Are you looking for a 3 or 4 bedroom home?&rdquo;
                           </div>
                         </div>
                       </div>

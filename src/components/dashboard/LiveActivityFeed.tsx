@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Zap, UserPlus, Calendar, Phone } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 type ActivityType = 'new_lead' | 'ai_message' | 'lead_qualified' | 'appointment_ready' | 'call_scheduled';

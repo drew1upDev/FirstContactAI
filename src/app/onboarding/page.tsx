@@ -149,7 +149,7 @@ export default function OnboardingPage() {
             </div>
             <h1 className="text-2xl font-bold mb-4">FirstContact AI</h1>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Your 24/7 lead qualification partner. Let's get your agent ready for the field.
+              Your 24/7 lead qualification partner. Let&apos;s get your agent ready for the field.
             </p>
           </div>
           
@@ -230,11 +230,11 @@ export default function OnboardingPage() {
                     <div className="space-y-3">
                       <Label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Tone Preference</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {['Friendly', 'Professional', 'Energetic'].map((voice) => (
+                        {(['Friendly', 'Professional', 'Energetic'] as const).map((voice: 'Friendly' | 'Professional' | 'Energetic') => (
                           <button
                             key={voice}
                             type="button"
-                            onClick={() => form.setValue('voiceIdentity', voice as any)}
+                            onClick={() => form.setValue('voiceIdentity', voice)}
                             className={cn(
                               "p-4 border-2 rounded-2xl text-center transition-all duration-200",
                               form.watch('voiceIdentity') === voice 
@@ -326,7 +326,7 @@ export default function OnboardingPage() {
                 <div className="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center mb-8">
                     <Check className="w-10 h-10" />
                 </div>
-                <h2 className="text-3xl font-bold text-primary mb-4">You're All Set!</h2>
+                <h2 className="text-3xl font-bold text-primary mb-4">You&apos;re All Set!</h2>
                 <p className="text-slate-500 max-w-sm mb-10">
                     Your AI agent is calibrated and ready. Use the webhook below to connect your lead sources.
                 </p>

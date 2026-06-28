@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { LeadPipeline } from "@/components/dashboard/LeadPipeline";
 import { ConversationThread } from "@/components/dashboard/ConversationThread";
 import { BriefingCard } from "@/components/dashboard/BriefingCard";
@@ -12,22 +12,16 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, Users, MessageSquare, BarChart3, Bell, Search, Settings, Flame, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 // Mock Data
-const mockLeads: Lead[] = [
+const INITIAL_LEADS: Lead[] = [
   { id: '1', agent_id: '1', name: 'John Doe', status: 'qualified', source: 'Zillow', email: 'john@example.com', phone: '555-0101', created_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date().toISOString(), metadata: { is_qualifying: true } },
   { id: '2', agent_id: '1', name: 'Alice Smith', status: 'new', source: 'Facebook', email: 'alice@example.com', phone: '555-0102', created_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date().toISOString(), metadata: { unread_count: 1 } },
   { id: '3', agent_id: '1', name: 'Bob Johnson', status: 'new', source: 'Website', email: 'bob@example.com', phone: '555-0103', created_at: new Date(Date.now() - 86400000).toISOString(), updated_at: new Date().toISOString() },
   { id: '4', agent_id: '1', name: 'Sarah Wilson', status: 'qualified', source: 'Zillow', email: 'sarah@example.com', phone: '555-0104', created_at: new Date(Date.now() - 172800000).toISOString(), updated_at: new Date().toISOString() },
 ];
 
-const mockScores: Record<string, LeadScore> = {
-  '1': { id: 's1', lead_id: '1', score: 85, summary: 'Highly motivated buyer looking for 3BR in Westside. Budget $600k. Approved for financing.', criteria: { motivation: 'High', budget_fit: 'Yes', area_match: 'Exact' }, is_appointment_ready: true, created_at: new Date().toISOString() },
-  '4': { id: 's4', lead_id: '4', score: 92, summary: 'Ready to list their home in Oakwood. Needs to sell within 2 months. Looking for an agent with local expertise.', criteria: { urgency: 'High', property_type: 'Single Family', local_focus: 'Yes' }, is_appointment_ready: true, created_at: new Date().toISOString() },
-};
-
-const mockMessages: Conversation[] = [
+const INITIAL_MESSAGES: Conversation[] = [
   { id: 'm1', lead_id: '1', agent_id: '1', channel: 'sms', direction: 'outbound', content: 'Hi John, I saw you were interested in 123 Main St. Are you looking to move soon?', created_at: new Date(Date.now() - 3000000).toISOString(), metadata: { sender_type: 'ai' } },
   { id: 'm2', lead_id: '1', agent_id: '1', channel: 'sms', direction: 'inbound', content: 'Yes, looking to buy in the next 3 months.', created_at: new Date(Date.now() - 2800000).toISOString() },
   { id: 'm3', lead_id: '1', agent_id: '1', channel: 'sms', direction: 'outbound', content: 'Great! What is your budget range for the new home?', created_at: new Date(Date.now() - 2500000).toISOString(), metadata: { sender_type: 'ai' } },
@@ -35,12 +29,56 @@ const mockMessages: Conversation[] = [
   { id: 'm5', lead_id: '1', agent_id: '1', channel: 'sms', direction: 'outbound', content: 'Perfect. I have a few listings that might fit. Would you like to schedule a quick call to discuss?', created_at: new Date(Date.now() - 1500000).toISOString(), metadata: { sender_type: 'ai' } },
 ];
 
+const mockScores: Record<string, LeadScore> = {
+  '1': { id: 's1', lead_id: '1', score: 85, summary: 'Highly motivated buyer looking for 3BR in Westside. Budget $600k. Approved for financing.', criteria: { intent: 'High', budget: '$600k', timeline: '3 mo' }, is_appointment_ready: true, created_at: new Date().toISOString() },
+  '4': { id: 's4', lead_id: '4', score: 92, summary: 'Ready to list their home in Oakwood. Needs to sell within 2 months. Looking for an agent with local expertise.', criteria: { intent: 'High', budget: 'Seller', timeline: '2 mo' }, is_appointment_ready: true, created_at: new Date().toISOString() },
+};
+
 export default function DashboardDemo() {
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(mockLeads[0]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(INITIAL_LEADS[0].id);
   const [showHotAlert, setShowHotAlert] = useState(true);
+  const [messages, setMessages] = useState<Conversation[]>(INITIAL_MESSAGES);
+  const [pausedLeads, setPausedLeads] = useState<Set<string>>(new Set());
+
+  const selectedLead = useMemo(() => 
+    INITIAL_LEADS.find(l => l.id === selectedLeadId) || null
+  , [selectedLeadId]);
+
+  const isAIPaused = selectedLeadId ? pausedLeads.has(selectedLeadId) : false;
+
+  const handleToggleAI = () => {
+    if (!selectedLeadId) return;
+    
+    setPausedLeads(prev => {
+      const next = new Set(prev);
+      if (next.has(selectedLeadId)) {
+        next.delete(selectedLeadId);
+      } else {
+        next.add(selectedLeadId);
+      }
+      return next;
+    });
+  };
+
+  const handleSendMessage = (content: string) => {
+    if (!selectedLeadId) return;
+
+    const newMessage: Conversation = {
+      id: `m-manual-${Date.now()}`,
+      lead_id: selectedLeadId,
+      agent_id: '1',
+      channel: 'sms',
+      direction: 'outbound',
+      content,
+      created_at: new Date().toISOString(),
+      metadata: { sender_type: 'agent' }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+  };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
       {/* Hot Lead Notification */}
       {showHotAlert && (
         <div className="absolute top-20 right-8 z-50 w-80 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -157,9 +195,10 @@ export default function DashboardDemo() {
               </div>
               <div className="overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0">
                 <LeadPipeline 
-                  leads={mockLeads} 
+                  leads={INITIAL_LEADS} 
                   scores={mockScores} 
-                  onLeadClick={setSelectedLead}
+                  onLeadClick={(lead) => setSelectedLeadId(lead.id)}
+                  pausedLeads={pausedLeads}
                 />
               </div>
             </div>
@@ -171,10 +210,13 @@ export default function DashboardDemo() {
                         <h2 className="font-bold text-slate-800">Conversation Thread</h2>
                         <button className="text-xs text-accent font-bold hover:underline">View History</button>
                         </div>
-                        <div className="h-[350px]">
+                        <div className="h-[450px]">
                         <ConversationThread
-                          messages={mockMessages}
+                          messages={messages.filter(m => m.lead_id === selectedLeadId)}
                           leadName={selectedLead.name}
+                          isAIPaused={isAIPaused}
+                          onToggleAI={handleToggleAI}
+                          onSendMessage={handleSendMessage}
                         />
                         </div>
 
@@ -187,6 +229,8 @@ export default function DashboardDemo() {
                           <BriefingCard 
                             lead={selectedLead} 
                             score={mockScores[selectedLead.id]} 
+                            isAIPaused={isAIPaused}
+                            onToggleAI={handleToggleAI}
                           />
                         </div>
                     </>

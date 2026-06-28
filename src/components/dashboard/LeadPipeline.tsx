@@ -10,11 +10,20 @@ interface PipelineColumnProps {
   count: number;
   leads: Lead[];
   scores: Record<string, LeadScore>;
+  pausedLeads?: Set<string>;
   className?: string;
   onLeadClick?: (lead: Lead) => void;
 }
 
-function PipelineColumn({ title, count, leads, scores, className, onLeadClick }: PipelineColumnProps) {
+function PipelineColumn({ 
+  title, 
+  count, 
+  leads, 
+  scores, 
+  pausedLeads, 
+  className, 
+  onLeadClick 
+}: PipelineColumnProps) {
   return (
     <div className={cn("flex flex-col h-full min-w-[300px] bg-slate-50/50 rounded-lg border border-slate-100", className)}>
       <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-lg">
@@ -33,6 +42,7 @@ function PipelineColumn({ title, count, leads, scores, className, onLeadClick }:
               lead={lead} 
               latestScore={scores[lead.id]} 
               onClick={() => onLeadClick?.(lead)}
+              isPaused={pausedLeads?.has(lead.id)}
             />
           ))}
           {leads.length === 0 && (
@@ -49,10 +59,11 @@ function PipelineColumn({ title, count, leads, scores, className, onLeadClick }:
 interface LeadPipelineProps {
   leads: Lead[];
   scores: Record<string, LeadScore>;
+  pausedLeads?: Set<string>;
   onLeadClick?: (lead: Lead) => void;
 }
 
-export function LeadPipeline({ leads, scores, onLeadClick }: LeadPipelineProps) {
+export function LeadPipeline({ leads, scores, pausedLeads, onLeadClick }: LeadPipelineProps) {
   const columns = [
     { id: 'new', title: 'New Leads' },
     { id: 'qualified', title: 'Qualified' },
@@ -74,6 +85,7 @@ export function LeadPipeline({ leads, scores, onLeadClick }: LeadPipelineProps) 
           count={leadsByStatus[col.id]?.length || 0}
           leads={leadsByStatus[col.id] || []}
           scores={scores}
+          pausedLeads={pausedLeads}
           onLeadClick={onLeadClick}
         />
       ))}

@@ -5,7 +5,6 @@ import { Stepper } from "@/components/onboarding/Stepper";
 import { OnboardingInput, OnboardingTextarea } from "@/components/onboarding/OnboardingField";
 import { ZipCodeSelector } from "@/components/onboarding/ZipCodeSelector";
 import { WebhookDisplay } from "@/components/onboarding/WebhookDisplay";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function OnboardingDemo() {
@@ -27,7 +26,7 @@ export default function OnboardingDemo() {
             <div className="w-10 h-10 bg-accent rounded-xl mb-6"></div>
             <h1 className="text-2xl font-bold mb-4">Set up your AI Agent</h1>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Let's configure your AI to match your voice and business goals.
+              Let&apos;s configure your AI to match your voice and business goals.
             </p>
           </div>
 
